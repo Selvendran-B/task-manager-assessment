@@ -1,11 +1,13 @@
 import os
-import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
 from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -16,18 +18,27 @@ from google.auth.transport import requests as google_requests
 from database import Base, engine, get_db
 from models import User, Task
 
+
 Base.metadata.create_all(bind=engine)
+
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 SESSION_SECRET = os.getenv("SESSION_SECRET")
 
 app = FastAPI(title="Task Manager")
+
+# Serve CSS and JavaScript files from the static folder
+app.mount(
+    "/static",
+    StaticFiles(directory="static"),
+    name="static"
+)
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET
 )
+
 templates = Jinja2Templates(directory="templates")
-
-
 
 class GoogleLogin(BaseModel):
     credential: str

@@ -1,76 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Task Manager</title>
+
+    <link rel="stylesheet"
+          href="/static/style.css">
 
     <script src="https://accounts.google.com/gsi/client"
             async
             defer></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
-            background: #f5f7fb;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
-
-        h1 {
-            margin-bottom: 5px;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0 15px;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 10px 18px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .task {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-        }
-
-        .logout {
-            float: right;
-        }
-
-        #app {
-            display: none;
-        }
-
-        #login {
-            text-align: center;
-            margin-top: 100px;
-        }
-    </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+
 <div id="login" class="card">
+
+    <div class="login-icon">
+        ✓
+    </div>
 
     <h1>Task Manager</h1>
 
-    <p>Sign in to manage your tasks.</p>
+    <p class="login-subtitle">
+        Organize your work and keep track of your progress.
+    </p>
 
     <div id="g_id_onload"
          data-client_id="101170250942-cf87tr6rr7i12sis9ioorihc477m6o31.apps.googleusercontent.com"
@@ -78,30 +39,109 @@
          data-auto_prompt="false">
     </div>
 
-    <div class="g_id_signin"
-         data-type="standard"
-         data-size="large"
-         data-theme="outline"
-         data-text="signin_with">
+    <div class="google-login">
+
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="outline"
+             data-text="signin_with">
+        </div>
+
     </div>
 
 </div>
 
 
+<!-- APPLICATION -->
+
 <div id="app">
 
-    <div class="card">
+    <!-- HEADER -->
 
-        <button class="logout" onclick="logout()">
+    <div class="card header">
+
+        <div>
+
+            <h1>Task Manager</h1>
+
+            <p id="userInfo"
+               class="user-info">
+            </p>
+
+        </div>
+
+        <button class="logout"
+                onclick="logout()">
             Logout
         </button>
 
-        <h1>Task Manager</h1>
+    </div>
 
-        <p id="userInfo"></p>
+
+    <!-- SUMMARY -->
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Total Tasks
+            </div>
+
+            <div id="totalCount"
+                 class="summary-number">
+                0
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Planned
+            </div>
+
+            <div id="plannedCount"
+                 class="summary-number">
+                0
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                In Progress
+            </div>
+
+            <div id="progressCount"
+                 class="summary-number">
+                0
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-label">
+                Complete
+            </div>
+
+            <div id="completeCount"
+                 class="summary-number">
+                0
+            </div>
+
+        </div>
 
     </div>
 
+
+    <!-- CREATE TASK -->
 
     <div class="card">
 
@@ -110,24 +150,61 @@
         <input
             id="title"
             type="text"
-            placeholder="Task title"
+            maxlength="100"
+            placeholder="What needs to be done?"
         >
 
         <textarea
             id="description"
-            placeholder="Description (optional)"
+            maxlength="500"
+            placeholder="Add a description (optional)"
         ></textarea>
 
-        <button onclick="createTask()">
+        <button
+            id="createButton"
+            class="create-button"
+            onclick="createTask()">
             Create Task
         </button>
 
     </div>
 
 
+    <!-- TASK LIST -->
+
     <div class="card">
 
         <h2>My Tasks</h2>
+
+        <div class="task-controls">
+
+            <input
+                id="search"
+                type="search"
+                placeholder="Search tasks..."
+            >
+
+            <select id="statusFilter">
+
+                <option value="All">
+                    All statuses
+                </option>
+
+                <option value="Planned">
+                    Planned
+                </option>
+
+                <option value="In Progress">
+                    In Progress
+                </option>
+
+                <option value="Complete">
+                    Complete
+                </option>
+
+            </select>
+
+        </div>
 
         <div id="tasks"></div>
 
@@ -136,195 +213,15 @@
 </div>
 
 
-<script>
+<!-- TOAST -->
 
-async function handleGoogleLogin(response) {
+<div id="toast"
+     class="toast">
+</div>
 
-    const result = await fetch("/auth/google", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            credential: response.credential
-        })
-    });
 
-    if (!result.ok) {
-        alert("Google login failed");
-        return;
-    }
-
-    location.reload();
-}
-
-
-async function loadUser() {
-
-    const response = await fetch("/auth/me");
-
-    if (response.ok) {
-
-        const user = await response.json();
-
-        document.getElementById("login").style.display = "none";
-        document.getElementById("app").style.display = "block";
-
-        document.getElementById("userInfo").textContent =
-            `Welcome, ${user.name} (${user.email})`;
-
-        loadTasks();
-
-    } else {
-
-        document.getElementById("login").style.display = "block";
-        document.getElementById("app").style.display = "none";
-    }
-}
-
-
-async function loadTasks() {
-
-    const response = await fetch("/api/tasks");
-
-    if (!response.ok) {
-        return;
-    }
-
-    const tasks = await response.json();
-
-    const container = document.getElementById("tasks");
-
-    container.innerHTML = "";
-
-    if (tasks.length === 0) {
-
-        container.innerHTML = "<p>No tasks yet.</p>";
-        return;
-    }
-
-    tasks.forEach(task => {
-
-        const div = document.createElement("div");
-
-        div.className = "task";
-
-        div.innerHTML = `
-            <h3>${escapeHtml(task.title)}</h3>
-
-            <p>${escapeHtml(task.description || "")}</p>
-
-            <select onchange="updateStatus(${task.id}, this.value)">
-
-                <option value="Planned"
-                    ${task.status === "Planned" ? "selected" : ""}>
-                    Planned
-                </option>
-
-                <option value="In Progress"
-                    ${task.status === "In Progress" ? "selected" : ""}>
-                    In Progress
-                </option>
-
-                <option value="Complete"
-                    ${task.status === "Complete" ? "selected" : ""}>
-                    Complete
-                </option>
-
-            </select>
-        `;
-
-        container.appendChild(div);
-    });
-}
-
-
-async function createTask() {
-
-    const title = document.getElementById("title").value;
-    const description = document.getElementById("description").value;
-
-    if (!title.trim()) {
-        alert("Please enter a task title.");
-        return;
-    }
-
-    const response = await fetch("/api/tasks", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            title: title,
-            description: description
-        })
-    });
-
-    if (!response.ok) {
-
-        const error = await response.json();
-
-        alert(error.detail || "Failed to create task.");
-
-        return;
-    }
-
-    document.getElementById("title").value = "";
-    document.getElementById("description").value = "";
-
-    loadTasks();
-}
-
-
-async function updateStatus(taskId, status) {
-
-    const response = await fetch(
-        `/api/tasks/${taskId}/status`,
-        {
-            method: "PATCH",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                status: status
-            })
-        }
-    );
-
-    if (!response.ok) {
-        alert("Failed to update status.");
-    }
-}
-
-
-async function logout() {
-
-    await fetch("/logout", {
-        method: "POST"
-    });
-
-    location.reload();
-}
-
-
-function escapeHtml(text) {
-
-    const div = document.createElement("div");
-
-    div.textContent = text;
-
-    return div.innerHTML;
-}
-
-
-loadUser();
-
-</script>
+<script src="/static/script.js"></script>
 
 </body>
+
 </html>
