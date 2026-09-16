@@ -12,9 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
-
+from auth import verify_google_token
 from database import Base, engine, get_db
 from models import User, Task
 
@@ -81,11 +79,10 @@ def google_login(
     db: Session = Depends(get_db)
 ):
     try:
-        google_user = id_token.verify_oauth2_token(
-            data.credential,
-            google_requests.Request(),
-            GOOGLE_CLIENT_ID
-        )
+        google_user = verify_google_token(
+        data.credential,
+        GOOGLE_CLIENT_ID
+    )
     except ValueError:
         raise HTTPException(
             status_code=401,
