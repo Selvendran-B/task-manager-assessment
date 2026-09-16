@@ -82,8 +82,11 @@ No separate username or password is required.
 
 ## Local Setup
 
+## Local Setup
+
 ### 1. Clone the repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd task-manager
+git clone https://github.com/Selvendran-B/task-manager-assessment.git
+cd task-manager-assessment
+
